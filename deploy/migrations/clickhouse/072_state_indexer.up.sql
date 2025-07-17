@@ -8,102 +8,73 @@
 --canonical_execution_contracts
 
 -- ### ACCOUNT STATE ###
-
 -- accounts_state_local stores the latest access records for each account (local table)
 CREATE TABLE accounts_state_local on cluster '{cluster}' (
     address            String,
-    is_contract        AggregateFunction(max, UInt8),
-    last_read_block    AggregateFunction(max, UInt64),
-    last_write_block   AggregateFunction(max, UInt64),
-    last_access_block  AggregateFunction(max, UInt64)
-) ENGINE = ReplicatedAggregatingMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
+    last_access_block  UInt64
+) ENGINE = ReplicatedReplacingMergeTree(
+    '/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}',
+    '{replica}',
+    last_access_block
+) PARTITION BY intDiv(last_access_block, 5000000)
 ORDER BY (address);
 
--- Distributed table
 CREATE TABLE accounts_state on cluster '{cluster}' AS accounts_state_local
 ENGINE = Distributed('{cluster}', default, accounts_state_local, rand());
 
--- nonce_reads update the last_read_block and last_access_block for each account
 CREATE MATERIALIZED VIEW mv_nonce_reads_to_accounts_state_local on cluster '{cluster}'
 TO accounts_state_local AS
 SELECT
     lower(address) as address,
-    maxState(toUInt8(false)) AS is_contract,
-    maxState(block_number) AS last_read_block,
-    maxState(toUInt64(0)) AS last_write_block,
-    maxState(block_number) AS last_access_block
+    max(block_number) AS last_access_block
 FROM canonical_execution_nonce_reads
 GROUP BY address;
 
--- nonce_diffs update the last_write_block and last_access_block for each account
 CREATE MATERIALIZED VIEW mv_nonce_diffs_to_accounts_state_local on cluster '{cluster}'
 TO accounts_state_local AS
 SELECT
     lower(address) as address,
-    maxState(toUInt8(false)) AS is_contract,
-    maxState(toUInt64(0)) AS last_read_block,
-    maxState(block_number) AS last_write_block,
-    maxState(block_number) AS last_access_block
+    max(block_number) AS last_access_block
 FROM canonical_execution_nonce_diffs
 GROUP BY address;
 
--- balance_diffs update the last_write_block and last_access_block for each account
 CREATE MATERIALIZED VIEW mv_balance_diffs_to_accounts_state_local on cluster '{cluster}'
 TO accounts_state_local AS
 SELECT
     lower(address) as address,
-    maxState(toUInt8(false)) AS is_contract,
-    maxState(toUInt64(0)) AS last_read_block,
-    maxState(block_number) AS last_write_block,
-    maxState(block_number) AS last_access_block
+    max(block_number) AS last_access_block
 FROM canonical_execution_balance_diffs
 GROUP BY address;
 
--- balance_reads update the last_read_block and last_access_block for each account
 CREATE MATERIALIZED VIEW mv_balance_reads_to_accounts_state_local on cluster '{cluster}'
 TO accounts_state_local AS
 SELECT
     lower(address) as address,
-    maxState(toUInt8(false)) AS is_contract,
-    maxState(block_number) AS last_read_block,
-    maxState(toUInt64(0)) AS last_write_block,
-    maxState(block_number) AS last_access_block
+    max(block_number) AS last_access_block
 FROM canonical_execution_balance_reads
 GROUP BY address;
 
--- storage_diffs update the last_access_block for each account
 CREATE MATERIALIZED VIEW mv_storage_diffs_to_accounts_state_local on cluster '{cluster}'
 TO accounts_state_local AS
 SELECT
     lower(address) as address,
-    maxState(toUInt8(true)) AS is_contract,
-    maxState(toUInt64(0)) AS last_read_block,
-    maxState(toUInt64(0)) AS last_write_block,
-    maxState(toUInt64(block_number)) AS last_access_block
+    max(block_number) AS last_access_block
 FROM canonical_execution_storage_diffs
 GROUP BY address;
 
--- storage_reads update the last_access_block for each account
 CREATE MATERIALIZED VIEW mv_storage_reads_to_accounts_state_local on cluster '{cluster}'
 TO accounts_state_local AS
 SELECT
     lower(contract_address) as address,
-    maxState(toUInt8(true)) AS is_contract,
-    maxState(toUInt64(0)) AS last_read_block,
-    maxState(toUInt64(0)) AS last_write_block,
-    maxState(toUInt64(block_number)) AS last_access_block
+    max(block_number) AS last_access_block
 FROM canonical_execution_storage_reads
 GROUP BY contract_address;
 
--- contracts mark the account as a contract
 CREATE MATERIALIZED VIEW mv_contracts_to_accounts_state_local on cluster '{cluster}'
 TO accounts_state_local AS
 SELECT
     lower(contract_address) as address,
-    maxState(toUInt8(true)) AS is_contract,
-    maxState(toUInt64(0)) AS last_read_block,
-    maxState(toUInt64(0)) AS last_write_block,
-    maxState(toUInt64(block_number)) AS last_access_block
+    max(block_number) AS last_access_block
 FROM canonical_execution_contracts
 GROUP BY contract_address;
 
@@ -112,10 +83,12 @@ GROUP BY contract_address;
 CREATE TABLE storage_state_local on cluster '{cluster}' (
     address            String,
     slot_key           String,
-    last_read_block    AggregateFunction(max, UInt64),
-    last_write_block   AggregateFunction(max, UInt64),
-    last_access_block  AggregateFunction(max, UInt64)
-) ENGINE = ReplicatedAggregatingMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
+    last_access_block  UInt64
+) ENGINE = ReplicatedReplacingMergeTree(
+    '/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}',
+    '{replica}',
+    last_access_block
+) PARTITION BY intDiv(last_access_block, 5000000)
 ORDER BY (address, slot_key);
 
 CREATE TABLE storage_state on cluster '{cluster}' AS storage_state_local
@@ -126,9 +99,7 @@ TO storage_state_local AS
 SELECT
     lower(address) as address,
     slot AS slot_key,
-    maxState(toUInt64(0)) AS last_read_block,
-    maxState(toUInt64(block_number)) AS last_write_block,
-    maxState(toUInt64(block_number)) AS last_access_block
+    max(block_number) AS last_access_block
 FROM canonical_execution_storage_diffs
 GROUP BY address, slot;
 
@@ -137,9 +108,7 @@ TO storage_state_local AS
 SELECT
     lower(contract_address) as address,
     slot AS slot_key,
-    maxState(toUInt64(block_number)) AS last_read_block,
-    maxState(toUInt64(0)) AS last_write_block,
-    maxState(toUInt64(block_number)) AS last_access_block
+    max(block_number) AS last_access_block
 FROM canonical_execution_storage_reads
 GROUP BY contract_address, slot;
 
