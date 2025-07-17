@@ -257,27 +257,6 @@ SELECT
 FROM canonical_execution_storage_reads
 GROUP BY address, slot;
 
--- ### ACCOUNT BLOCK SUMMARY ###
-
-CREATE TABLE accounts_block_summary (
-    block_number       UInt64,
-    eoa_read_count     UInt64,
-    eoa_write_count    UInt64,
-    contract_read_count UInt64,
-    contract_write_count UInt64
-) ENGINE = SummingMergeTree()
-ORDER BY (block_number);
-
--- ### STORAGE BLOCK SUMMARY ###
-
-CREATE TABLE storage_block_summary (
-    block_number     UInt64,
-    storage_read_count       UInt64,
-    storage_write_count      UInt64
-) ENGINE = SummingMergeTree()
-ORDER BY (block_number);
-
-
 -- Secondary Indexes
 ALTER TABLE accounts_state
     ADD INDEX idx_acc_last_access   any(last_access_block) TYPE minmax   GRANULARITY 4,
