@@ -27,7 +27,7 @@ ENGINE = Distributed('{cluster}', default, accounts_state_local, rand());
 CREATE MATERIALIZED VIEW mv_nonce_reads_to_accounts_state_local on cluster '{cluster}'
 TO accounts_state_local AS
 SELECT
-    address,
+    lower(address) as address,
     maxState(toUInt8(false)) AS is_contract,
     maxState(block_number) AS last_read_block,
     maxState(toUInt64(0)) AS last_write_block,
@@ -39,7 +39,7 @@ GROUP BY address;
 CREATE MATERIALIZED VIEW mv_nonce_diffs_to_accounts_state_local on cluster '{cluster}'
 TO accounts_state_local AS
 SELECT
-    address,
+    lower(address) as address,
     maxState(toUInt8(false)) AS is_contract,
     maxState(toUInt64(0)) AS last_read_block,
     maxState(block_number) AS last_write_block,
@@ -51,7 +51,7 @@ GROUP BY address;
 CREATE MATERIALIZED VIEW mv_balance_diffs_to_accounts_state_local on cluster '{cluster}'
 TO accounts_state_local AS
 SELECT
-    address,
+    lower(address) as address,
     maxState(toUInt8(false)) AS is_contract,
     maxState(toUInt64(0)) AS last_read_block,
     maxState(block_number) AS last_write_block,
@@ -63,7 +63,7 @@ GROUP BY address;
 CREATE MATERIALIZED VIEW mv_balance_reads_to_accounts_state_local on cluster '{cluster}'
 TO accounts_state_local AS
 SELECT
-    address,
+    lower(address) as address,
     maxState(toUInt8(false)) AS is_contract,
     maxState(block_number) AS last_read_block,
     maxState(toUInt64(0)) AS last_write_block,
@@ -75,7 +75,7 @@ GROUP BY address;
 CREATE MATERIALIZED VIEW mv_storage_diffs_to_accounts_state_local on cluster '{cluster}'
 TO accounts_state_local AS
 SELECT
-    address,
+    lower(address) as address,
     maxState(toUInt8(true)) AS is_contract,
     maxState(toUInt64(0)) AS last_read_block,
     maxState(toUInt64(0)) AS last_write_block,
@@ -87,7 +87,7 @@ GROUP BY address;
 CREATE MATERIALIZED VIEW mv_storage_reads_to_accounts_state_local on cluster '{cluster}'
 TO accounts_state_local AS
 SELECT
-    contract_address AS address,
+    lower(contract_address) as address,
     maxState(toUInt8(true)) AS is_contract,
     maxState(toUInt64(0)) AS last_read_block,
     maxState(toUInt64(0)) AS last_write_block,
@@ -99,7 +99,7 @@ GROUP BY contract_address;
 CREATE MATERIALIZED VIEW mv_contracts_to_accounts_state_local on cluster '{cluster}'
 TO accounts_state_local AS
 SELECT
-    contract_address AS address,
+    lower(contract_address) as address,
     maxState(toUInt8(true)) AS is_contract,
     maxState(toUInt64(0)) AS last_read_block,
     maxState(toUInt64(0)) AS last_write_block,
@@ -124,7 +124,7 @@ ENGINE = Distributed('{cluster}', default, storage_state_local, rand());
 CREATE MATERIALIZED VIEW mv_storage_diffs_to_storage_state_local on cluster '{cluster}'
 TO storage_state_local AS
 SELECT
-    address,
+    lower(address) as address,
     slot AS slot_key,
     maxState(toUInt64(0)) AS last_read_block,
     maxState(toUInt64(block_number)) AS last_write_block,
@@ -135,7 +135,7 @@ GROUP BY address, slot;
 CREATE MATERIALIZED VIEW mv_storage_reads_to_storage_state_local on cluster '{cluster}'
 TO storage_state_local AS
 SELECT
-    contract_address AS address,
+    lower(contract_address) as address,
     slot AS slot_key,
     maxState(toUInt64(block_number)) AS last_read_block,
     maxState(toUInt64(0)) AS last_write_block,
@@ -156,7 +156,7 @@ ENGINE = Distributed('{cluster}', default, contract_storage_count_agg_local, ran
 CREATE MATERIALIZED VIEW mv_storage_diffs_to_contract_storage_count_agg_local on cluster '{cluster}'
 TO contract_storage_count_agg_local AS
 SELECT
-    address,
+    lower(address) as address,
     uniqState(slot) AS total_slots
 FROM canonical_execution_storage_diffs
 GROUP BY address;
@@ -176,7 +176,7 @@ ENGINE = Distributed('{cluster}', default, account_access_count_agg_local, rand(
 CREATE MATERIALIZED VIEW mv_nonce_reads_to_account_access_count_agg_local on cluster '{cluster}'
 TO account_access_count_agg_local AS
 SELECT
-    address,
+    lower(address) as address,
     maxState(toUInt8(false)) AS is_contract,
     countState(block_number) AS read_count
 FROM canonical_execution_nonce_reads
@@ -185,7 +185,7 @@ GROUP BY address;
 CREATE MATERIALIZED VIEW mv_nonce_diffs_to_account_access_count_agg_local on cluster '{cluster}'
 TO account_access_count_agg_local AS
 SELECT
-    address,
+    lower(address) as address,
     maxState(toUInt8(false)) AS is_contract,
     countState(block_number) AS write_count
 FROM canonical_execution_nonce_diffs
@@ -194,7 +194,7 @@ GROUP BY address;
 CREATE MATERIALIZED VIEW mv_balance_diffs_to_account_access_count_agg_local on cluster '{cluster}'
 TO account_access_count_agg_local AS
 SELECT
-    address,
+    lower(address) as address,
     maxState(toUInt8(false)) AS is_contract,
     countState(block_number) AS write_count
 FROM canonical_execution_balance_diffs
@@ -203,7 +203,7 @@ GROUP BY address;
 CREATE MATERIALIZED VIEW mv_balance_reads_to_account_access_count_agg_local on cluster '{cluster}'
 TO account_access_count_agg_local AS
 SELECT
-    address,
+    lower(address) as address,
     maxState(toUInt8(false)) AS is_contract,
     countState(block_number) AS read_count
 FROM canonical_execution_balance_reads
@@ -212,7 +212,7 @@ GROUP BY address;
 CREATE MATERIALIZED VIEW mv_storage_diffs_to_account_access_count_agg_local on cluster '{cluster}'
 TO account_access_count_agg_local AS
 SELECT
-    address,
+    lower(address) as address,
     maxState(toUInt8(true)) AS is_contract,
     countState(block_number) AS write_count
 FROM canonical_execution_storage_diffs
@@ -221,7 +221,7 @@ GROUP BY address;
 CREATE MATERIALIZED VIEW mv_storage_reads_to_account_access_count_agg_local on cluster '{cluster}'
 TO account_access_count_agg_local AS
 SELECT
-    contract_address AS address,
+    lower(contract_address) as address,
     maxState(toUInt8(true)) AS is_contract,
     countState(block_number) AS read_count
 FROM canonical_execution_storage_reads
@@ -230,7 +230,7 @@ GROUP BY address;
 CREATE MATERIALIZED VIEW mv_contracts_to_account_access_count_agg_local on cluster '{cluster}'
 TO account_access_count_agg_local AS
 SELECT
-    contract_address as address,
+    lower(contract_address) as address,
     maxState(toUInt8(true)) AS is_contract
 FROM canonical_execution_contracts
 GROUP BY contract_address;
@@ -250,7 +250,7 @@ ENGINE = Distributed('{cluster}', default, storage_access_count_agg_local, rand(
 CREATE MATERIALIZED VIEW mv_storage_diffs_to_storage_access_count_agg_local on cluster '{cluster}'
 TO storage_access_count_agg_local AS
 SELECT
-    address,
+    lower(address) as address,
     slot AS slot_key,
     countState(block_number) AS write_count
 FROM canonical_execution_storage_diffs
@@ -259,7 +259,7 @@ GROUP BY address, slot;
 CREATE MATERIALIZED VIEW mv_storage_reads_to_storage_access_count_agg_local on cluster '{cluster}'
 TO storage_access_count_agg_local AS
 SELECT
-    contract_address as address,
+    lower(contract_address) as address,
     slot as slot_key,
     countState(block_number) AS read_count
 FROM canonical_execution_storage_reads
