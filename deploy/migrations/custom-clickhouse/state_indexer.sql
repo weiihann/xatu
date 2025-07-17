@@ -105,38 +105,37 @@ GROUP BY contract_address;
 
 -- ### STORAGE STATE ###
 
+-- storage_state store the latest access records for each storage slot
 CREATE TABLE storage_state (
-    address            FixedString(20),
-    slot_key           FixedString(32),
+    address            String,
+    slot_key           String,
     last_read_block    AggregateFunction(max, UInt64),
     last_write_block   AggregateFunction(max, UInt64),
-    last_access_block  AggregateFunction(max, UInt64) -- max(last_read_block, last_write_block)
+    last_access_block  AggregateFunction(max, UInt64)
 ) ENGINE = AggregatingMergeTree()
-PARTITION BY intDiv(any(last_access_block), 1000000)
 ORDER BY (address, slot_key)
-SETTINGS index_granularity = 8192;
 
--- For storage diffs: aggregate last_write_block and last_access_block
+-- storage_diffs update the last_write_block and last_access_block for each storage slot
 CREATE MATERIALIZED VIEW mv_storage_diffs_to_storage_state
 TO storage_state AS
 SELECT
     address,
     slot AS slot_key,
-    maxState(0) AS last_read_block, -- no read operation in diffs
-    maxState(block_number) AS last_write_block,
-    maxState(block_number) AS last_access_block
+    maxState(toUInt64(0)) AS last_read_block,
+    maxState(toUInt64(block_number)) AS last_write_block,
+    maxState(toUInt64(block_number)) AS last_access_block
 FROM canonical_execution_storage_diffs
 GROUP BY address, slot;
 
--- For storage reads: aggregate last_read_block and last_access_block
+-- storage_reads update the last_read_block and last_access_block for each storage slot
 CREATE MATERIALIZED VIEW mv_storage_reads_to_storage_state
 TO storage_state AS
 SELECT
     contract_address AS address,
     slot AS slot_key,
-    maxState(block_number) AS last_read_block,
-    maxState(0) AS last_write_block, -- no write operation in reads
-    maxState(block_number) AS last_access_block
+    maxState(toUInt64(block_number)) AS last_read_block,
+    maxState(toUInt64(0)) AS last_write_block,
+    maxState(toUInt64(block_number)) AS last_access_block
 FROM canonical_execution_storage_reads
 GROUP BY contract_address, slot;
 
