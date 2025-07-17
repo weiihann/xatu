@@ -159,7 +159,7 @@ GROUP BY address;
 
 -- account_access_count_agg store the read and write count for each account
 CREATE TABLE account_access_count_agg (
-    address       FixedString(20),
+    address       String,
     is_contract   AggregateFunction(max, UInt8),
     read_count    AggregateFunction(count, UInt64),
     write_count   AggregateFunction(count, UInt64)
@@ -167,7 +167,67 @@ CREATE TABLE account_access_count_agg (
 ENGINE = AggregatingMergeTree()
 ORDER BY (address);
 
+CREATE MATERIALIZED VIEW mv_nonce_reads_to_account_access_count_agg
+TO account_access_count_agg AS
+SELECT
+    address,
+    maxState(toUInt8(false)) AS is_contract,
+    countState(block_number) AS read_count
+FROM canonical_execution_nonce_reads
+GROUP BY address;
 
+CREATE MATERIALIZED VIEW mv_nonce_diffs_to_account_access_count_agg
+TO account_access_count_agg AS
+SELECT
+    address,
+    maxState(toUInt8(false)) AS is_contract,
+    countState(block_number) AS write_count
+FROM canonical_execution_nonce_diffs
+GROUP BY address;
+
+CREATE MATERIALIZED VIEW mv_balance_diffs_to_account_access_count_agg
+TO account_access_count_agg AS
+SELECT
+    address,
+    maxState(toUInt8(false)) AS is_contract,
+    countState(block_number) AS write_count
+FROM canonical_execution_balance_diffs
+GROUP BY address;
+
+CREATE MATERIALIZED VIEW mv_balance_reads_to_account_access_count_agg
+TO account_access_count_agg AS
+SELECT
+    address,
+    maxState(toUInt8(false)) AS is_contract,
+    countState(block_number) AS read_count
+FROM canonical_execution_balance_reads
+GROUP BY address;
+
+CREATE MATERIALIZED VIEW mv_storage_diffs_to_account_access_count_agg
+TO account_access_count_agg AS
+SELECT
+    address,
+    maxState(toUInt8(true)) AS is_contract,
+    countState(block_number) AS write_count
+FROM canonical_execution_storage_diffs
+GROUP BY address;
+
+CREATE MATERIALIZED VIEW mv_storage_reads_to_account_access_count_agg
+TO account_access_count_agg AS
+SELECT
+    contract_address AS address,
+    maxState(toUInt8(true)) AS is_contract,
+    countState(block_number) AS read_count
+FROM canonical_execution_storage_reads
+GROUP BY address;
+
+CREATE MATERIALIZED VIEW mv_contracts_to_account_access_count_agg
+TO account_access_count_agg AS
+SELECT
+    contract_address as address,
+    maxState(toUInt8(true)) AS is_contract
+FROM canonical_execution_contracts
+GROUP BY contract_address;
 
 -- ### STORAGE ACCESS COUNT AGG ###
 
