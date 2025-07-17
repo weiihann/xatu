@@ -139,16 +139,37 @@ SELECT
 FROM canonical_execution_storage_reads
 GROUP BY contract_address, slot;
 
+-- ### CONTRACT STORAGE COUNT AGG ###
+-- contract_storage_count_agg store the total number of unique storage slots for each contract
+CREATE TABLE contract_storage_count_agg (
+    address     String,
+    total_slots AggregateFunction(uniq, String)
+) ENGINE = AggregatingMergeTree()
+ORDER BY (address);
+
+CREATE MATERIALIZED VIEW mv_storage_diffs_to_contract_storage_count_agg
+TO contract_storage_count_agg AS
+SELECT
+    address,
+    uniqState(slot) AS total_slots
+FROM canonical_execution_storage_diffs
+GROUP BY address;
+
 -- ### ACCOUNT ACCESS COUNT AGG ###
 
+-- account_access_count_agg store the read and write count for each account
 CREATE TABLE account_access_count_agg (
     address       FixedString(20),
-    is_contract_state   AggregateFunction(argMax, UInt8, UInt64),
-    read_count          AggregateFunction(count, UInt64),
-    write_count         AggregateFunction(count, UInt64),
+    is_contract   AggregateFunction(max, UInt8),
+    read_count    AggregateFunction(count, UInt64),
+    write_count   AggregateFunction(count, UInt64)
 ) 
 ENGINE = AggregatingMergeTree()
 ORDER BY (address);
+
+
+
+-- ### STORAGE ACCESS COUNT AGG ###
 
 CREATE TABLE storage_access_count_agg (
     address       FixedString(20),
@@ -173,13 +194,6 @@ CREATE TABLE storage_block_summary (
     storage_write_count      UInt64
 ) ENGINE = SummingMergeTree()
 ORDER BY (block_number);
-
-CREATE TABLE contract_storage_count_agg (
-    address     FixedString(20),
-    total_slots AggregateFunction(uniq, FixedString(32))
-) ENGINE = AggregatingMergeTree()
-ORDER BY (address);
-
 
 
 -- Secondary Indexes
