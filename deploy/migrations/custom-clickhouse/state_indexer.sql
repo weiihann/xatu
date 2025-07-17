@@ -232,12 +232,32 @@ GROUP BY contract_address;
 -- ### STORAGE ACCESS COUNT AGG ###
 
 CREATE TABLE storage_access_count_agg (
-    address       FixedString(20),
-    slot_key      FixedString(32),
+    address       String,
+    slot_key      String,
     read_count          AggregateFunction(count, UInt64),
-    write_count         AggregateFunction(count, UInt64),
+    write_count         AggregateFunction(count, UInt64)
 ) ENGINE = AggregatingMergeTree()
 ORDER BY (address, slot_key);
+
+CREATE MATERIALIZED VIEW mv_storage_diffs_to_storage_access_count_agg
+TO storage_access_count_agg AS
+SELECT
+    address,
+    slot AS slot_key,
+    countState(block_number) AS write_count
+FROM canonical_execution_storage_diffs
+GROUP BY address, slot;
+
+CREATE MATERIALIZED VIEW mv_storage_reads_to_storage_access_count_agg
+TO storage_access_count_agg AS
+SELECT
+    contract_address as address,
+    slot as slot_key,
+    countState(block_number) AS read_count
+FROM canonical_execution_storage_reads
+GROUP BY address, slot;
+
+-- ### ACCOUNT BLOCK SUMMARY ###
 
 CREATE TABLE accounts_block_summary (
     block_number       UInt64,
@@ -247,6 +267,8 @@ CREATE TABLE accounts_block_summary (
     contract_write_count UInt64
 ) ENGINE = SummingMergeTree()
 ORDER BY (block_number);
+
+-- ### STORAGE BLOCK SUMMARY ###
 
 CREATE TABLE storage_block_summary (
     block_number     UInt64,
