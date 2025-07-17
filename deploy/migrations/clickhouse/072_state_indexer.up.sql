@@ -16,7 +16,7 @@ CREATE TABLE accounts_state_local on cluster '{cluster}' (
     last_read_block    AggregateFunction(max, UInt64),
     last_write_block   AggregateFunction(max, UInt64),
     last_access_block  AggregateFunction(max, UInt64)
-) ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
+) ENGINE = ReplicatedAggregatingMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
 ORDER BY (address);
 
 -- Distributed table
@@ -115,7 +115,7 @@ CREATE TABLE storage_state_local on cluster '{cluster}' (
     last_read_block    AggregateFunction(max, UInt64),
     last_write_block   AggregateFunction(max, UInt64),
     last_access_block  AggregateFunction(max, UInt64)
-) ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
+) ENGINE = ReplicatedAggregatingMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
 ORDER BY (address, slot_key);
 
 CREATE TABLE storage_state on cluster '{cluster}' AS storage_state_local
@@ -147,7 +147,7 @@ GROUP BY contract_address, slot;
 CREATE TABLE contract_storage_count_agg_local on cluster '{cluster}' (
     address     String,
     total_slots AggregateFunction(uniq, String)
-) ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
+) ENGINE = ReplicatedAggregatingMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
 ORDER BY (address);
 
 CREATE TABLE contract_storage_count_agg on cluster '{cluster}' AS contract_storage_count_agg_local
@@ -167,7 +167,7 @@ CREATE TABLE account_access_count_agg_local on cluster '{cluster}' (
     is_contract   AggregateFunction(max, UInt8),
     read_count    AggregateFunction(count, UInt64),
     write_count   AggregateFunction(count, UInt64)
-) ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
+) ENGINE = ReplicatedAggregatingMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
 ORDER BY (address);
 
 CREATE TABLE account_access_count_agg on cluster '{cluster}' AS account_access_count_agg_local
@@ -241,7 +241,7 @@ CREATE TABLE storage_access_count_agg_local on cluster '{cluster}' (
     slot_key      String,
     read_count    AggregateFunction(count, UInt64),
     write_count   AggregateFunction(count, UInt64)
-) ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
+) ENGINE = ReplicatedAggregatingMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
 ORDER BY (address, slot_key);
 
 CREATE TABLE storage_access_count_agg on cluster '{cluster}' AS storage_access_count_agg_local
