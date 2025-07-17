@@ -256,12 +256,3 @@ SELECT
     countState(block_number) AS read_count
 FROM canonical_execution_storage_reads
 GROUP BY address, slot;
-
--- Secondary Indexes
-ALTER TABLE accounts_state
-    ADD INDEX idx_acc_last_access   any(last_access_block) TYPE minmax   GRANULARITY 4,
-    ADD INDEX idx_acc_address       address           TYPE bloom_filter GRANULARITY 4;
-
-ALTER TABLE storage_state
-    ADD INDEX idx_st_last_access    any(last_access_block) TYPE minmax   GRANULARITY 4,
-    ADD INDEX idx_st_address        address           TYPE bloom_filter GRANULARITY 4;
