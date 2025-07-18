@@ -11,6 +11,9 @@ from fill_storage_state import (
     mv_storage_diffs_to_storage_state_local,
     mv_storage_reads_to_storage_state_local,
 )
+from fill_contract_storage_count import (
+    mv_storage_diffs_to_contract_storage_count_agg_local,
+)
 
 import os
 import time
@@ -42,9 +45,14 @@ storage_state_sql = [
     mv_storage_reads_to_storage_state_local,
 ]
 
+contract_storage_count_agg_sql = [
+    mv_storage_diffs_to_contract_storage_count_agg_local,
+]
+
 fills = [
     # account_state_sql,
-    storage_state_sql,
+    # storage_state_sql,
+    contract_storage_count_agg_sql,
 ]
 
 def main():
