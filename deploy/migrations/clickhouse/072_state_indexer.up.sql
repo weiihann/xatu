@@ -20,7 +20,7 @@ CREATE TABLE default.accounts_state_local on cluster '{cluster}' (
 ORDER BY (address);
 
 CREATE TABLE default.accounts_state on cluster '{cluster}' AS default.accounts_state_local
-ENGINE = Distributed('{cluster}', default, default.accounts_state_local, rand());
+ENGINE = Distributed('{cluster}', default, default.accounts_state_local, cityHash64(address));
 
 CREATE MATERIALIZED VIEW mv_nonce_reads_to_accounts_state_local on cluster '{cluster}'
 TO default.accounts_state_local AS
@@ -92,7 +92,7 @@ CREATE TABLE default.storage_state_local on cluster '{cluster}' (
 ORDER BY (address, slot_key);
 
 CREATE TABLE default.storage_state on cluster '{cluster}' AS default.storage_state_local
-ENGINE = Distributed('{cluster}', default, default.storage_state_local, rand());
+ENGINE = Distributed('{cluster}', default, default.storage_state_local, cityHash64(address, slot_key));
 
 CREATE MATERIALIZED VIEW mv_storage_diffs_to_storage_state_local on cluster '{cluster}'
 TO default.storage_state_local AS
@@ -120,7 +120,7 @@ CREATE TABLE default.contract_storage_count_agg_local on cluster '{cluster}' (
 ORDER BY (address);
 
 CREATE TABLE default.contract_storage_count_agg on cluster '{cluster}' AS default.contract_storage_count_agg_local
-ENGINE = Distributed('{cluster}', default, default.contract_storage_count_agg_local, rand());
+ENGINE = Distributed('{cluster}', default, default.contract_storage_count_agg_local, cityHash64(address));
 
 CREATE MATERIALIZED VIEW mv_storage_diffs_to_contract_storage_count_agg_local on cluster '{cluster}'
 TO default.contract_storage_count_agg_local AS
@@ -140,7 +140,7 @@ CREATE TABLE default.account_access_count_agg_local on cluster '{cluster}' (
 ORDER BY (address);
 
 CREATE TABLE default.account_access_count_agg on cluster '{cluster}' AS default.account_access_count_agg_local
-ENGINE = Distributed('{cluster}', default, default.account_access_count_agg_local, rand());
+ENGINE = Distributed('{cluster}', default, default.account_access_count_agg_local, cityHash64(address));
 
 CREATE MATERIALIZED VIEW mv_nonce_reads_to_account_access_count_agg_local on cluster '{cluster}'
 TO default.account_access_count_agg_local AS
@@ -214,7 +214,7 @@ CREATE TABLE default.storage_access_count_agg_local on cluster '{cluster}' (
 ORDER BY (address, slot_key);
 
 CREATE TABLE default.storage_access_count_agg on cluster '{cluster}' AS default.storage_access_count_agg_local
-ENGINE = Distributed('{cluster}', default, default.storage_access_count_agg_local, rand());
+ENGINE = Distributed('{cluster}', default, default.storage_access_count_agg_local, cityHash64(address, slot_key));
 
 CREATE MATERIALIZED VIEW mv_storage_diffs_to_storage_access_count_agg_local on cluster '{cluster}'
 TO default.storage_access_count_agg_local AS
