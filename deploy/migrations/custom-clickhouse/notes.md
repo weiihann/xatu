@@ -43,3 +43,33 @@
   - Uncompressed: ~2.27GB
   - Compressed: ~2.29GB
   - Total Rows: ~25M
+
+`account_access_count_sum`
+- Time Taken: ~33 minutes
+```
+   ┌─table──────────────────────────┬─uncompressed─┬─compressed─┬─total_rows─┐
+1. │ account_access_count_sum_local │ 11.60 GiB    │ 8.41 GiB   │  211340982 │
+   └────────────────────────────────┴──────────────┴────────────┴────────────┘
+   ┌─table──────────────────────────┬─uncompressed─┬─compressed─┬─total_rows─┐
+1. │ account_access_count_sum_local │ 11.95 GiB    │ 8.69 GiB   │  218347889 │
+   └────────────────────────────────┴──────────────┴────────────┴────────────┘
+```
+- Size:
+  - Uncompressed: ~23.55GB
+  - Compressed: ~17.1GB
+  - Total Rows: ~430 Million
+
+`storage_access_count_sum`
+- Time Taken: ~41 minutes
+```
+   ┌─table──────────────────────────┬─uncompressed─┬─compressed─┬─total_rows─┐
+1. │ storage_access_count_sum_local │ 101.16 GiB   │ 45.85 GiB  │  920490344 │
+   └────────────────────────────────┴──────────────┴────────────┴────────────┘
+   ┌─table──────────────────────────┬─uncompressed─┬─compressed─┬─total_rows─┐
+1. │ storage_access_count_sum_local │ 101.21 GiB   │ 45.79 GiB  │  920910899 │
+   └────────────────────────────────┴──────────────┴────────────┴────────────┘
+```
+- Size:
+  - Uncompressed: ~202.4GB
+  - Compressed: ~91.6GB
+  - Total Rows: ~1.8 Billion

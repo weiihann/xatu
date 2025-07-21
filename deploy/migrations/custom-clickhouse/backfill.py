@@ -14,6 +14,18 @@ from fill_storage_state import (
 from fill_contract_storage_count import (
     mv_storage_diffs_to_contract_storage_count_agg_local,
 )
+from fill_account_access import (
+    mv_nonce_reads_to_account_access_count_sum_local,
+    mv_nonce_diffs_to_account_access_count_sum_local,
+    mv_balance_diffs_to_account_access_count_sum_local,
+    mv_balance_reads_to_account_access_count_sum_local,
+    mv_storage_diffs_to_account_access_count_sum_local,
+    mv_storage_reads_to_account_access_count_sum_local,
+)
+from fill_storage_access import (
+    mv_storage_diffs_to_sum_local,
+    mv_storage_reads_to_sum_local,
+)
 
 import os
 import time
@@ -39,20 +51,32 @@ account_state_sql = [
     mv_storage_reads_to_accounts_state_local,
     mv_contracts_to_accounts_state_local,
 ]
-
 storage_state_sql = [
     mv_storage_diffs_to_storage_state_local,
     mv_storage_reads_to_storage_state_local,
 ]
-
 contract_storage_count_agg_sql = [
     mv_storage_diffs_to_contract_storage_count_agg_local,
+]
+account_access_count_agg_sql = [
+    mv_nonce_reads_to_account_access_count_sum_local,
+    mv_nonce_diffs_to_account_access_count_sum_local,
+    mv_balance_diffs_to_account_access_count_sum_local,
+    mv_balance_reads_to_account_access_count_sum_local,
+    mv_storage_diffs_to_account_access_count_sum_local,
+    mv_storage_reads_to_account_access_count_sum_local,
+]
+storage_access_count_agg_sql = [
+    mv_storage_diffs_to_sum_local,
+    mv_storage_reads_to_sum_local,
 ]
 
 fills = [
     # account_state_sql,
     # storage_state_sql,
-    contract_storage_count_agg_sql,
+    # contract_storage_count_agg_sql,
+    # account_access_count_agg_sql,
+    storage_access_count_agg_sql,
 ]
 
 def main():
