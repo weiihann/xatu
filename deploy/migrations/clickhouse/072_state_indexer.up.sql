@@ -131,105 +131,104 @@ FROM default.canonical_execution_storage_diffs
 GROUP BY address;
 
 -- ### ACCOUNT ACCESS COUNT AGG ###
-CREATE TABLE default.account_access_count_agg_local on cluster '{cluster}' (
+CREATE TABLE default.account_access_count_sum_local ON CLUSTER '{cluster}' (
     address       String,
-    is_contract   AggregateFunction(max, UInt8),
-    read_count    AggregateFunction(count, UInt64),
-    write_count   AggregateFunction(count, UInt64)
-) ENGINE = ReplicatedAggregatingMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
-ORDER BY (address);
+    read_count    UInt64,
+    write_count   UInt64
+) ENGINE = ReplicatedSummingMergeTree(
+    '/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}',
+    '{replica}'
+)
+ORDER BY address;
 
-CREATE TABLE default.account_access_count_agg on cluster '{cluster}' AS default.account_access_count_agg_local
-ENGINE = Distributed('{cluster}', default, account_access_count_agg_local, cityHash64(address));
+CREATE TABLE default.account_access_count_sum ON CLUSTER '{cluster}' AS default.account_access_count_sum_local
+ENGINE = Distributed('{cluster}', default, account_access_count_sum_local, cityHash64(address));
 
-CREATE MATERIALIZED VIEW mv_nonce_reads_to_account_access_count_agg_local on cluster '{cluster}'
-TO default.account_access_count_agg_local AS
+CREATE MATERIALIZED VIEW mv_nonce_reads_to_account_access_count_sum_local ON CLUSTER '{cluster}'
+TO default.account_access_count_sum_local AS
 SELECT
-    lower(address) as address,
-    maxState(toUInt8(false)) AS is_contract,
-    countState(block_number) AS read_count
+    lower(address) AS address,
+    count() AS read_count,
+    0 AS write_count
 FROM default.canonical_execution_nonce_reads
 GROUP BY address;
 
-CREATE MATERIALIZED VIEW mv_nonce_diffs_to_account_access_count_agg_local on cluster '{cluster}'
-TO default.account_access_count_agg_local AS
+CREATE MATERIALIZED VIEW mv_nonce_diffs_to_account_access_count_sum_local ON CLUSTER '{cluster}'
+TO default.account_access_count_sum_local AS
 SELECT
-    lower(address) as address,
-    maxState(toUInt8(false)) AS is_contract,
-    countState(block_number) AS write_count
+    lower(address) AS address,
+    0 AS read_count,
+    count() AS write_count
 FROM default.canonical_execution_nonce_diffs
 GROUP BY address;
 
-CREATE MATERIALIZED VIEW mv_balance_diffs_to_account_access_count_agg_local on cluster '{cluster}'
-TO default.account_access_count_agg_local AS
+CREATE MATERIALIZED VIEW mv_balance_reads_to_account_access_count_sum_local ON CLUSTER '{cluster}'
+TO default.account_access_count_sum_local AS
 SELECT
-    lower(address) as address,
-    maxState(toUInt8(false)) AS is_contract,
-    countState(block_number) AS write_count
-FROM default.canonical_execution_balance_diffs
-GROUP BY address;
-
-CREATE MATERIALIZED VIEW mv_balance_reads_to_account_access_count_agg_local on cluster '{cluster}'
-TO default.account_access_count_agg_local AS
-SELECT
-    lower(address) as address,
-    maxState(toUInt8(false)) AS is_contract,
-    countState(block_number) AS read_count
+    lower(address) AS address,
+    count() AS read_count,
+    0 AS write_count
 FROM default.canonical_execution_balance_reads
 GROUP BY address;
 
-CREATE MATERIALIZED VIEW mv_storage_diffs_to_account_access_count_agg_local on cluster '{cluster}'
-TO default.account_access_count_agg_local AS
+CREATE MATERIALIZED VIEW mv_balance_diffs_to_account_access_count_sum_local ON CLUSTER '{cluster}'
+TO default.account_access_count_sum_local AS
 SELECT
-    lower(address) as address,
-    maxState(toUInt8(true)) AS is_contract,
-    countState(block_number) AS write_count
-FROM default.canonical_execution_storage_diffs
+    lower(address) AS address,
+    0 AS read_count,
+    count() AS write_count
+FROM default.canonical_execution_balance_diffs
 GROUP BY address;
 
-CREATE MATERIALIZED VIEW mv_storage_reads_to_account_access_count_agg_local on cluster '{cluster}'
-TO default.account_access_count_agg_local AS
+CREATE MATERIALIZED VIEW mv_storage_reads_to_account_access_count_sum_local ON CLUSTER '{cluster}'
+TO default.account_access_count_sum_local AS
 SELECT
-    lower(contract_address) as address,
-    maxState(toUInt8(true)) AS is_contract,
-    countState(block_number) AS read_count
+    lower(contract_address) AS address,
+    count() AS read_count,
+    0 AS write_count
 FROM default.canonical_execution_storage_reads
 GROUP BY address;
 
-CREATE MATERIALIZED VIEW mv_contracts_to_account_access_count_agg_local on cluster '{cluster}'
-TO default.account_access_count_agg_local AS
+CREATE MATERIALIZED VIEW mv_storage_diffs_to_account_access_count_sum_local ON CLUSTER '{cluster}'
+TO default.account_access_count_sum_local AS
 SELECT
-    lower(contract_address) as address,
-    maxState(toUInt8(true)) AS is_contract
-FROM default.canonical_execution_contracts
-GROUP BY contract_address;
+    lower(address) AS address,
+    0 AS read_count,
+    count() AS write_count
+FROM default.canonical_execution_storage_diffs
+GROUP BY address;
 
 -- ### STORAGE ACCESS COUNT AGG ###
-CREATE TABLE default.storage_access_count_agg_local on cluster '{cluster}' (
-    address       String,
-    slot_key      String,
-    read_count    AggregateFunction(count, UInt64),
-    write_count   AggregateFunction(count, UInt64)
-) ENGINE = ReplicatedAggregatingMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
+CREATE TABLE default.storage_access_count_sum_local ON CLUSTER '{cluster}' (
+    address     String,
+    slot_key    String,
+    read_count  UInt64,
+    write_count UInt64
+) ENGINE = ReplicatedSummingMergeTree(
+    '/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}',
+    '{replica}'
+)
 ORDER BY (address, slot_key);
 
-CREATE TABLE default.storage_access_count_agg on cluster '{cluster}' AS default.storage_access_count_agg_local
-ENGINE = Distributed('{cluster}', default, storage_access_count_agg_local, cityHash64(address, slot_key));
+CREATE TABLE default.storage_access_count_sum ON CLUSTER '{cluster}' AS default.storage_access_count_sum_local
+ENGINE = Distributed('{cluster}', default, storage_access_count_sum_local, cityHash64(address, slot_key));
 
-CREATE MATERIALIZED VIEW mv_storage_diffs_to_storage_access_count_agg_local on cluster '{cluster}'
-TO default.storage_access_count_agg_local AS
+CREATE MATERIALIZED VIEW mv_storage_diffs_to_sum_local ON CLUSTER '{cluster}'
+TO default.storage_access_count_sum_local AS
 SELECT
-    lower(address) as address,
+    lower(address) AS address,
     slot AS slot_key,
-    countState(block_number) AS write_count
+    0 AS read_count,
+    count() AS write_count
 FROM default.canonical_execution_storage_diffs
 GROUP BY address, slot;
 
-CREATE MATERIALIZED VIEW mv_storage_reads_to_storage_access_count_agg_local on cluster '{cluster}'
-TO default.storage_access_count_agg_local AS
+CREATE MATERIALIZED VIEW mv_storage_reads_to_sum_local ON CLUSTER '{cluster}'
+TO default.storage_access_count_sum_local AS
 SELECT
-    lower(contract_address) as address,
-    slot as slot_key,
-    countState(block_number) AS read_count
+    lower(contract_address) AS address,
+    slot AS slot_key,
+    count() AS read_count,
+    0 AS write_count
 FROM default.canonical_execution_storage_reads
 GROUP BY address, slot;
