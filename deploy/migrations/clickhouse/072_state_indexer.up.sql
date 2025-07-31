@@ -8,8 +8,8 @@
 --canonical_execution_contracts
 
 -- ### ACCOUNT STATE ###
--- default.accounts_state_local stores the latest access records for each account (local table)
-CREATE TABLE default.accounts_state_local on cluster '{cluster}' (
+-- default.accounts_last_access_local stores the latest access records for each account (local table)
+CREATE TABLE default.accounts_last_access_local on cluster '{cluster}' (
     address            String,
     last_access_block  UInt64
 ) ENGINE = ReplicatedReplacingMergeTree(
@@ -19,59 +19,59 @@ CREATE TABLE default.accounts_state_local on cluster '{cluster}' (
 ) PARTITION BY intDiv(last_access_block, 5000000)
 ORDER BY (address);
 
-CREATE TABLE default.accounts_state on cluster '{cluster}' AS default.accounts_state_local
-ENGINE = Distributed('{cluster}', default, accounts_state_local, cityHash64(address));
+CREATE TABLE default.accounts_last_access on cluster '{cluster}' AS default.accounts_last_access_local
+ENGINE = Distributed('{cluster}', default, accounts_last_access_local, cityHash64(address));
 
-CREATE MATERIALIZED VIEW mv_nonce_reads_to_accounts_state_local on cluster '{cluster}'
-TO default.accounts_state_local AS
+CREATE MATERIALIZED VIEW mv_nonce_reads_to_accounts_last_access_local on cluster '{cluster}'
+TO default.accounts_last_access_local AS
 SELECT
     lower(address) as address,
     max(block_number) AS last_access_block
 FROM default.canonical_execution_nonce_reads
 GROUP BY address;
 
-CREATE MATERIALIZED VIEW mv_nonce_diffs_to_accounts_state_local on cluster '{cluster}'
-TO default.accounts_state_local AS
+CREATE MATERIALIZED VIEW mv_nonce_diffs_to_accounts_last_access_local on cluster '{cluster}'
+TO default.accounts_last_access_local AS
 SELECT
     lower(address) as address,
     max(block_number) AS last_access_block
 FROM default.canonical_execution_nonce_diffs
 GROUP BY address;
 
-CREATE MATERIALIZED VIEW mv_balance_diffs_to_accounts_state_local on cluster '{cluster}'
-TO default.accounts_state_local AS
+CREATE MATERIALIZED VIEW mv_balance_diffs_to_accounts_last_access_local on cluster '{cluster}'
+TO default.accounts_last_access_local AS
 SELECT
     lower(address) as address,
     max(block_number) AS last_access_block
 FROM default.canonical_execution_balance_diffs
 GROUP BY address;
 
-CREATE MATERIALIZED VIEW mv_balance_reads_to_accounts_state_local on cluster '{cluster}'
-TO default.accounts_state_local AS
+CREATE MATERIALIZED VIEW mv_balance_reads_to_accounts_last_access_local on cluster '{cluster}'
+TO default.accounts_last_access_local AS
 SELECT
     lower(address) as address,
     max(block_number) AS last_access_block
 FROM default.canonical_execution_balance_reads
 GROUP BY address;
 
-CREATE MATERIALIZED VIEW mv_storage_diffs_to_accounts_state_local on cluster '{cluster}'
-TO default.accounts_state_local AS
+CREATE MATERIALIZED VIEW mv_storage_diffs_to_accounts_last_access_local on cluster '{cluster}'
+TO default.accounts_last_access_local AS
 SELECT
     lower(address) as address,
     max(block_number) AS last_access_block
 FROM default.canonical_execution_storage_diffs
 GROUP BY address;
 
-CREATE MATERIALIZED VIEW mv_storage_reads_to_accounts_state_local on cluster '{cluster}'
-TO default.accounts_state_local AS
+CREATE MATERIALIZED VIEW mv_storage_reads_to_accounts_last_access_local on cluster '{cluster}'
+TO default.accounts_last_access_local AS
 SELECT
     lower(contract_address) as address,
     max(block_number) AS last_access_block
 FROM default.canonical_execution_storage_reads
 GROUP BY contract_address;
 
-CREATE MATERIALIZED VIEW mv_contracts_to_accounts_state_local on cluster '{cluster}'
-TO default.accounts_state_local AS
+CREATE MATERIALIZED VIEW mv_contracts_to_accounts_last_access_local on cluster '{cluster}'
+TO default.accounts_last_access_local AS
 SELECT
     lower(contract_address) as address,
     max(block_number) AS last_access_block
