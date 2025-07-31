@@ -80,7 +80,7 @@ GROUP BY contract_address;
 
 -- ### STORAGE STATE ###
 
-CREATE TABLE default.storage_state_local on cluster '{cluster}' (
+CREATE TABLE default.storage_last_access_local on cluster '{cluster}' (
     address            String,
     slot_key           String,
     last_access_block  UInt64
@@ -91,11 +91,11 @@ CREATE TABLE default.storage_state_local on cluster '{cluster}' (
 ) PARTITION BY intDiv(last_access_block, 5000000)
 ORDER BY (address, slot_key);
 
-CREATE TABLE default.storage_state on cluster '{cluster}' AS default.storage_state_local
-ENGINE = Distributed('{cluster}', default, storage_state_local, cityHash64(address, slot_key));
+CREATE TABLE default.storage_last_access on cluster '{cluster}' AS default.storage_last_access_local
+ENGINE = Distributed('{cluster}', default, storage_last_access_local, cityHash64(address, slot_key));
 
-CREATE MATERIALIZED VIEW mv_storage_diffs_to_storage_state_local on cluster '{cluster}'
-TO default.storage_state_local AS
+CREATE MATERIALIZED VIEW mv_storage_diffs_to_storage_last_access_local on cluster '{cluster}'
+TO default.storage_last_access_local AS
 SELECT
     lower(address) as address,
     slot AS slot_key,
@@ -103,8 +103,8 @@ SELECT
 FROM default.canonical_execution_storage_diffs
 GROUP BY address, slot;
 
-CREATE MATERIALIZED VIEW mv_storage_reads_to_storage_state_local on cluster '{cluster}'
-TO default.storage_state_local AS
+CREATE MATERIALIZED VIEW mv_storage_reads_to_storage_last_access_local on cluster '{cluster}'
+TO default.storage_last_access_local AS
 SELECT
     lower(contract_address) as address,
     slot AS slot_key,
