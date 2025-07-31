@@ -7,7 +7,7 @@
 --canonical_execution_storage_reads
 --canonical_execution_contracts
 
--- ### ACCOUNT STATE ###
+-- ### ACCOUNT LAST ACCESS ###
 -- default.accounts_last_access_local stores the latest access records for each account (local table)
 CREATE TABLE default.accounts_last_access_local on cluster '{cluster}' (
     address            String,
@@ -78,8 +78,7 @@ SELECT
 FROM default.canonical_execution_contracts
 GROUP BY contract_address;
 
--- ### STORAGE STATE ###
-
+-- ### STORAGE LAST ACCESS ###
 CREATE TABLE default.storage_last_access_local on cluster '{cluster}' (
     address            String,
     slot_key           String,
@@ -111,21 +110,3 @@ SELECT
     max(block_number) AS last_access_block
 FROM default.canonical_execution_storage_reads
 GROUP BY contract_address, slot;
-
--- ### CONTRACT STORAGE COUNT AGG ###
-CREATE TABLE default.contract_storage_count_agg_local on cluster '{cluster}' (
-    address     String,
-    total_slots AggregateFunction(uniq, String)
-) ENGINE = ReplicatedAggregatingMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
-ORDER BY (address);
-
-CREATE TABLE default.contract_storage_count_agg on cluster '{cluster}' AS default.contract_storage_count_agg_local
-ENGINE = Distributed('{cluster}', default, contract_storage_count_agg_local, cityHash64(address));
-
-CREATE MATERIALIZED VIEW mv_storage_diffs_to_contract_storage_count_agg_local on cluster '{cluster}'
-TO default.contract_storage_count_agg_local AS
-SELECT
-    lower(address) as address,
-    uniqState(slot) AS total_slots
-FROM default.canonical_execution_storage_diffs
-GROUP BY address;
