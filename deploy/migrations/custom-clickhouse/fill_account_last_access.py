@@ -14,8 +14,6 @@ def mv_nonce_diffs_to_accounts_last_access_local(start, end):
     return f"""
     INSERT INTO default.accounts_last_access (address, last_access_block)
     SELECT
-
-    
         lower(address) as address,
         max(block_number) AS last_access_block
     FROM default.canonical_execution_nonce_diffs
