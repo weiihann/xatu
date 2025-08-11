@@ -94,7 +94,7 @@ def get_max_block_number(table_name: str) -> int:
         max_block = result.scalar()
         return max_block if max_block is not None else 0
 
-def build_table_max_blocks_cache(functions: List[Callable]) -> Dict[str, int]:
+def build_table_max_blocks_cache(functions: List[Callable], end_block: int = None) -> Dict[str, int]:
     """Build a cache of max block numbers for all source tables used by the functions."""
     table_cache = {}
     
@@ -103,8 +103,13 @@ def build_table_max_blocks_cache(functions: List[Callable]) -> Dict[str, int]:
             table_name = get_source_table_for_function(func)
             if table_name not in table_cache:
                 max_block = get_max_block_number(table_name)
+                # Use end_block if specified and max_block exceeds it
+                if end_block is not None and max_block > end_block:
+                    max_block = end_block
+                    print(f"Table {table_name}: max block = {max_block} (limited by end_block)")
+                else:
+                    print(f"Table {table_name}: max block = {max_block}")
                 table_cache[table_name] = max_block
-                print(f"Table {table_name}: max block = {max_block}")
         except Exception as e:
             print(f"Warning: Could not get source table for function {func.__name__}: {e}")
             continue
@@ -144,12 +149,12 @@ def execute_function_with_table_blocks(func: Callable, table_cache: Dict[str, in
         print(f"Error executing function {func.__name__}: {e}")
         raise
 
-def backfill_configuration(config_name: str, functions: List[Callable], step: int = 100000, start_block: int = 0) -> None:
+def backfill_configuration(config_name: str, functions: List[Callable], step: int = 100000, start_block: int = 0, end_block: int = None) -> None:
     """Backfill a specific configuration."""
     print(f"\n=== Starting backfill for {config_name} ===")
     
     # Build cache of max blocks for all source tables
-    table_cache = build_table_max_blocks_cache(functions)
+    table_cache = build_table_max_blocks_cache(functions, end_block)
     
     if not table_cache:
         print(f"No tables found for {config_name}, skipping...")
@@ -181,14 +186,18 @@ def main():
     """Main backfill function."""
     # Configuration: which fills to run
     active_fills = [
-        'account_last_access',
+        # 'account_last_access',
         'storage_last_access', 
-        'account_first_access',
-        'storage_first_access',
+        # 'account_first_access',
+        # 'storage_first_access',
     ]
     
     step_size = 100000
     start_block = 0
+
+    # This marks the end block for all insert operations
+    # Uncomment this if you want to use the default max block in each source table
+    end_block = 22431083
     
     print("=== Xatu State Indexer Backfill ===")
     print(f"Step size: {step_size}")
@@ -207,7 +216,8 @@ def main():
                 fill_name, 
                 FILL_CONFIGURATIONS[fill_name], 
                 step_size, 
-                start_block
+                start_block,
+                end_block
             )
         except Exception as e:
             print(f"Fatal error in {fill_name}: {e}")

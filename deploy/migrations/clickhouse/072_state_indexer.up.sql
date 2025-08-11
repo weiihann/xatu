@@ -82,11 +82,13 @@ GROUP BY contract_address;
 CREATE TABLE default.storage_last_access_local on cluster '{cluster}' (
     address            String,
     slot_key           String,
-    last_access_block  UInt64
+    last_access_block  UInt64,
+    is_deleted         Bool,
+    version            UInt128
 ) ENGINE = ReplicatedReplacingMergeTree(
     '/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}',
     '{replica}',
-    last_access_block
+    version
 ) PARTITION BY intDiv(last_access_block, 5000000)
 ORDER BY (address, slot_key);
 
@@ -98,7 +100,10 @@ TO default.storage_last_access_local AS
 SELECT
     lower(address) as address,
     slot AS slot_key,
-    max(block_number) AS last_access_block
+    max(block_number) AS last_access_block,
+    argMax(to_value, (block_number, transaction_index, internal_index)) = '0x0000000000000000000000000000000000000000000000000000000000000000' AS is_deleted,
+    -- Makes sure that we always get the latest version of the storage slot
+    (bitShiftLeft(toUInt128(max(block_number)), 64) + bitShiftLeft(toUInt128(argMax(transaction_index, (block_number, transaction_index))), 32) + toUInt128(argMax(internal_index, (block_number, transaction_index, internal_index)))) AS version
 FROM default.canonical_execution_storage_diffs
 GROUP BY address, slot;
 
@@ -107,7 +112,14 @@ TO default.storage_last_access_local AS
 SELECT
     lower(contract_address) as address,
     slot AS slot_key,
-    max(block_number) AS last_access_block
+    max(block_number) AS last_access_block,
+    argMax(value, (block_number, transaction_index, internal_index)) = '0x0000000000000000000000000000000000000000000000000000000000000000' AS is_deleted,
+    -- We do not use internal index here because internal indices are not unique, but it is purely for ordering in the same table.
+    -- That is, same combination of (block_number, transaction_index, internal_index) can appear multiple times with storage_diffs.
+    -- Therefore, in storage_reads, it will overwrite the latest record if and only if there isn't a storage_diffs record in the same block.
+    -- This ensures that we will always keep the latest last_access_block and is_deleted for the same slot if there is a storage_diffs record in the same block.
+    -- And if there's no storage_diffs record, then the storage_reads will overwrite the latest record.
+    (bitShiftLeft(toUInt128(max(block_number)), 64)) AS version
 FROM default.canonical_execution_storage_reads
 GROUP BY contract_address, slot;
 
