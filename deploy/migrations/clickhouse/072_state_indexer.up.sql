@@ -7,6 +7,7 @@
 --canonical_execution_storage_reads
 --canonical_execution_contracts
 
+-- ### DEBUG ###
 -- ### ACCOUNT LAST ACCESS ###
 -- default.accounts_last_access_local stores the latest access records for each account (local table)
 CREATE TABLE default.accounts_last_access_local on cluster '{cluster}' (
@@ -16,7 +17,7 @@ CREATE TABLE default.accounts_last_access_local on cluster '{cluster}' (
     '/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}',
     '{replica}',
     last_access_block
-) PARTITION BY intDiv(last_access_block, 5000000)
+)
 ORDER BY (address);
 
 CREATE TABLE default.accounts_last_access on cluster '{cluster}' AS default.accounts_last_access_local
@@ -89,7 +90,7 @@ CREATE TABLE default.storage_last_access_local on cluster '{cluster}' (
     '/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}',
     '{replica}',
     version
-) PARTITION BY intDiv(last_access_block, 5000000)
+)
 ORDER BY (address, slot_key);
 
 CREATE TABLE default.storage_last_access on cluster '{cluster}' AS default.storage_last_access_local
@@ -132,7 +133,7 @@ CREATE TABLE default.accounts_first_access_local on cluster '{cluster}' (
   '/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}',
   '{replica}',
   version
-) PARTITION BY intDiv(first_access_block, 5000000)
+)
 ORDER BY (address);
 
 CREATE TABLE default.accounts_first_access on cluster '{cluster}' AS default.accounts_first_access_local
@@ -211,7 +212,7 @@ CREATE TABLE default.storage_first_access_local on cluster '{cluster}' (
   '/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}',
   '{replica}',
   version
-) PARTITION BY intDiv(first_access_block, 5000000)
+)
 ORDER BY (address, slot);
 
 CREATE TABLE default.storage_first_access on cluster '{cluster}' AS default.storage_first_access_local
