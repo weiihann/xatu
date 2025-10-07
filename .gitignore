@@ -16,3 +16,4 @@ sage.yaml
 .goreleaser.yaml.new
 .aider*
 relay-monitor.yaml
+deploy/migrations/custom-clickhouse/.env
