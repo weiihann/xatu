@@ -20,8 +20,6 @@ import "pkg/proto/eth/v1/execution_engine.proto";
 import "pkg/proto/eth/v1/validator.proto";
 import "pkg/proto/eth/v1/sync_committee.proto";
 
-import "pkg/proto/blockprint/block_classification.proto";
-
 import "pkg/proto/mevrelay/bids.proto";
 import "pkg/proto/mevrelay/relay.proto";
 import "pkg/proto/mevrelay/payloads.proto";
@@ -918,14 +916,7 @@ message ClientMeta {
     BlockIdentifier block = 1;
   }
 
-  // Deprecated: Blockprint is no longer supported
-  message AdditionalBlockprintBlockClassificationData {
-    // Epoch contains the epoch information for the block classification.
-    EpochV2 epoch = 1;
-
-    // Slot contains the slot information for the block classification.
-    SlotV2 slot = 2;
-  }
+  // AdditionalBlockprintBlockClassificationData was removed — blockprint is deprecated.
 
   message AttestationDataSnapshot {
     // RequestedAtSlotStartDiffMs is the difference how far in to the slot the
@@ -1184,6 +1175,10 @@ message ClientMeta {
 
   // AdditionalLibP2PTraceHandleStatusData: Holds additional data for a handle status event in LibP2P tracing.
   message AdditionalLibP2PTraceHandleStatusData {
+    xatu.libp2p.TraceEventMetadata metadata = 1;
+  }
+
+  message AdditionalLibP2PTraceIdentifyData {
     xatu.libp2p.TraceEventMetadata metadata = 1;
   }
 
@@ -1664,12 +1659,8 @@ message ClientMeta {
     // eth v1 blob sidecar event.
     AdditionalEthV1EventsBlobSidecarData eth_v1_events_blob_sidecar = 42
         [ json_name = "BEACON_API_ETH_V1_EVENTS_BLOB_SIDECAR" ];
-    // Deprecated: Blockprint is no longer supported
-    // AdditionalBlockprintBlockClassification contains additional data on
-    // blockprint block classifications.
-    AdditionalBlockprintBlockClassificationData
-        blockprint_block_classification = 43
-        [ json_name = "BLOCKPRINT_BLOCK_CLASSIFICATION" ];
+    // Field 43 was blockprint_block_classification — blockprint is deprecated.
+    // Do not reuse field number 43.
     // AdditionalEthV1BeaconBlobSidecarData contains additional data on beacon
     // blob sidecars.
     AdditionalEthV1BeaconBlobSidecarData eth_v1_beacon_blob_sidecar = 44
@@ -1771,6 +1762,7 @@ message ClientMeta {
     AdditionalEthV1BeaconSyncCommitteeData eth_v1_beacon_sync_committee = 92 [ json_name = "BEACON_API_ETH_V1_BEACON_SYNC_COMMITTEE" ];
     // AdditionalEthV2BeaconBlockSyncAggregateData contains additional data about the sync aggregate.
     AdditionalEthV2BeaconBlockSyncAggregateData eth_v2_beacon_block_sync_aggregate = 93 [ json_name = "BEACON_API_ETH_V2_BEACON_BLOCK_SYNC_AGGREGATE" ];
+    AdditionalLibP2PTraceIdentifyData libp2p_trace_identify = 94 [ json_name = "LIBP2P_TRACE_IDENTIFY" ];
   }
 
   // ModuleName contains the name of the module that sent the event.
@@ -1844,6 +1836,8 @@ message ServerMeta {
 
   message AdditionalLibP2PTraceSyntheticHeartbeatData { Peer peer = 1; }
 
+  message AdditionalLibp2PTraceIdentifyData { Peer peer = 1; }
+
   message AdditionalNodeRecordConsensusData { Geo geo = 1; }
 
   message AdditionalNodeRecordExecutionData { Geo geo = 1; }
@@ -1881,6 +1875,10 @@ message ServerMeta {
     // event peer geo location
     AdditionalLibP2PTraceSyntheticHeartbeatData LIBP2P_TRACE_SYNTHETIC_HEARTBEAT = 42
         [ json_name = "LIBP2P_TRACE_SYNTHETIC_HEARTBEAT" ];
+    // AdditionalLibp2PTraceIdentify contains additional data on identify
+    // event peer geo location
+    AdditionalLibp2PTraceIdentifyData LIBP2P_TRACE_IDENTIFY = 43
+        [ json_name = "LIBP2P_TRACE_IDENTIFY" ];
   }
 }
 
@@ -1926,7 +1924,9 @@ message Event {
     BEACON_API_ETH_V2_BEACON_BLOCK_EXECUTION_TRANSACTION = 30;
     BEACON_API_ETH_V2_BEACON_BLOCK_WITHDRAWAL = 31;
     BEACON_API_ETH_V1_EVENTS_BLOB_SIDECAR = 32;
-    BLOCKPRINT_BLOCK_CLASSIFICATION = 33; // Deprecated: Blockprint is no longer supported
+    // Enum value 33 was BLOCKPRINT_BLOCK_CLASSIFICATION — blockprint is deprecated.
+    reserved 33;
+    reserved "BLOCKPRINT_BLOCK_CLASSIFICATION";
     BEACON_API_ETH_V1_BEACON_BLOB_SIDECAR = 34;
     BEACON_P2P_ATTESTATION = 35;
     BEACON_API_ETH_V1_PROPOSER_DUTY = 36;
@@ -1981,8 +1981,9 @@ message Event {
     BEACON_API_ETH_V1_BEACON_SYNC_COMMITTEE = 85;
     BEACON_API_ETH_V2_BEACON_BLOCK_SYNC_AGGREGATE = 86;
     EXECUTION_BLOCK_METRICS = 87;
-    EXECUTION_STATE_SIZE_DELTA = 88;
-    EXECUTION_MPT_DEPTH = 89;
+    LIBP2P_TRACE_IDENTIFY = 88;
+    EXECUTION_STATE_SIZE_DELTA = 89;
+    EXECUTION_MPT_DEPTH = 90;
   }
   // Name is the name of the event.
   Name name = 1;
@@ -2259,9 +2260,8 @@ message DecoratedEvent {
         [ json_name = "BEACON_API_ETH_V2_BEACON_BLOCK_WITHDRAWAL" ];
     xatu.eth.v1.EventBlobSidecar eth_v1_events_blob_sidecar = 34
         [ json_name = "BEACON_API_ETH_V1_EVENTS_BLOB_SIDECAR" ];
-    // Deprecated: Blockprint is no longer supported
-    xatu.blockprint.BlockClassification blockprint_block_classification = 35
-        [ json_name = "BLOCKPRINT_BLOCK_CLASSIFICATION" ];
+    // Field 35 was blockprint_block_classification — blockprint is deprecated.
+    // Do not reuse field number 35.
     xatu.eth.v1.BlobSidecar eth_v1_beacon_block_blob_sidecar = 36
         [ json_name = "BEACON_API_ETH_V1_BEACON_BLOB_SIDECAR" ];
     xatu.eth.v1.AttestationV2 beacon_p2p_attestation = 37
@@ -2350,6 +2350,8 @@ message DecoratedEvent {
         [ json_name = "LIBP2P_TRACE_GOSSIPSUB_DATA_COLUMN_SIDECAR" ];
     xatu.libp2p.SyntheticHeartbeat libp2p_trace_synthetic_heartbeat = 78
         [ json_name = "LIBP2P_TRACE_SYNTHETIC_HEARTBEAT" ];
+    xatu.libp2p.Identify libp2p_trace_identify = 79
+        [ json_name = "LIBP2P_TRACE_IDENTIFY" ];
     xatu.libp2p.DataColumnCustodyProbe libp2p_trace_rpc_data_column_custody_probe = 200
         [ json_name = "LIBP2P_TRACE_RPC_DATA_COLUMN_CUSTODY_PROBE" ];
     ExecutionStateSize execution_state_size = 201
