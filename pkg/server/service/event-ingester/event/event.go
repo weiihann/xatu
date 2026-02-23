@@ -109,6 +109,7 @@ var (
 	TypeNodeRecordExecution                     Type = Type(noderecord.ExecutionType)
 	TypeNodeRecordConsensus                     Type = Type(noderecord.ConsensusType)
 	TypeLibP2PTraceSyntheticHeartbeat           Type = Type(libp2p.TraceSyntheticHeartbeatType)
+	TypeLibP2PTraceIdentify                     Type = Type(libp2p.TraceIdentifyType)
 	TypeLibP2PRPCDataColumnCustodyProbe         Type = Type(libp2p.TypeLibp2pRPCDataColumnCustodyProbe)
 )
 
@@ -367,6 +368,9 @@ func NewEventRouter(log logrus.FieldLogger, cache store.Cache, geoipProvider geo
 	})
 	router.RegisterHandler(TypeLibP2PTraceSyntheticHeartbeat, func(event *xatu.DecoratedEvent, router *EventRouter) (Event, error) {
 		return libp2p.NewTraceSyntheticHeartbeat(router.log, event, router.geoipProvider), nil
+	})
+	router.RegisterHandler(TypeLibP2PTraceIdentify, func(event *xatu.DecoratedEvent, router *EventRouter) (Event, error) {
+		return libp2p.NewTraceIdentify(router.log, event, router.geoipProvider), nil
 	})
 	router.RegisterHandler(TypeMEVRelayBidTraceBuilderBlockSubmission, func(event *xatu.DecoratedEvent, router *EventRouter) (Event, error) {
 		return mevrelay.NewBidTraceBuilderBlockSubmission(router.log, event), nil

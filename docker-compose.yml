@@ -318,6 +318,7 @@ services:
           "libp2p-trace-gossipsub-blob-sidecar"
           "libp2p-trace-gossipsub-data-column-sidecar"
           "libp2p-trace-synthetic-heartbeat"
+          "libp2p-trace-identify"
           "libp2p-trace-rpc-meta-control-prune"
           "libp2p-trace-rpc-meta-control-graft"
           "libp2p-trace-rpc-meta-control-idontwant"

@@ -1836,6 +1836,8 @@ message ServerMeta {
 
   message AdditionalLibP2PTraceSyntheticHeartbeatData { Peer peer = 1; }
 
+  message AdditionalLibp2PTraceIdentifyData { Peer peer = 1; }
+
   message AdditionalNodeRecordConsensusData { Geo geo = 1; }
 
   message AdditionalNodeRecordExecutionData { Geo geo = 1; }
@@ -1873,6 +1875,10 @@ message ServerMeta {
     // event peer geo location
     AdditionalLibP2PTraceSyntheticHeartbeatData LIBP2P_TRACE_SYNTHETIC_HEARTBEAT = 42
         [ json_name = "LIBP2P_TRACE_SYNTHETIC_HEARTBEAT" ];
+    // AdditionalLibp2PTraceIdentify contains additional data on identify
+    // event peer geo location
+    AdditionalLibp2PTraceIdentifyData LIBP2P_TRACE_IDENTIFY = 43
+        [ json_name = "LIBP2P_TRACE_IDENTIFY" ];
   }
 }
 
